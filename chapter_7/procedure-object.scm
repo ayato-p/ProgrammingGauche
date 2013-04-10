@@ -188,18 +188,20 @@
 (fold/log + 0 '(1 2 3 4 5))
 
 
-;;patern match
+;;pattern match
 (define (append2 a b)
   (if (null? a)
       b
       (cons (car a) (append2 (cdr a) b))))
 
+;;パターンマッチなしの場合
 (define (append . args)
-  (cond ((null? args) '())
-	((null? (car args)) (car args))
-	(else (append2 (car args) (apply append (cdr args))))))
+  (cond
+   ((null? args) '())
+   ((null? (cdr args)) (car args))
+   (else (append2 (car args) (apply append (cdr args))))))
 
-
+;;パターンマッチありの場合
 (use util.match)
 (define (append . args)
   (match args
@@ -208,6 +210,7 @@
 	 ((a . b) (append2 a (apply append b)))))
 
 (append '(1 2 3) '(a b c) '(X Y Z))
+;; => (1 2 3 a b c X Y Z)
 
 
 ;;keyword
@@ -254,4 +257,57 @@
 (let ((func (lambda (x) x))
       (x 10))
   (cut func <> x <...>))
+
+
+;;values
+(use srfi-1)
+(split-at '(1 2 3 4 5 6 7 8 9 10) 3)
+
+(receive (min-val max-val)
+	 (min&max 3 1 2)
+	 (list min-val max-val))
+
+(receive (min-val . rest)
+	 (min&max 3 1 2)
+	 (list min-val rest))
+
+(receive all-values
+	 (min&max 3 1 2)
+	 all-values)
+
+(use srfi-11)
+(let-values (((min-val max-val) (min&max 3 1 2)))
+  (format #t "max: ~s\nmin: ~s\n" max-val min-val))
+
+
+(define (min&max . args)
+  (values (apply min args) (apply max args)))
+
+(let ((a 3)
+      (b 4))
+  (let-values (((a b) (min&max 0 100))
+	       ((x y) (min&max a b)))
+    (format #t "x: ~s\ny: ~s\n" x y)))
+
+(let ((a 3)
+      (b 4))
+  (let*-values (((a b) (min&max 0 100))
+		((x y) (min&max a b)))
+    (format #t "x: ~s\ny: ~s\n" x y)))
+
+(values-ref (min&max 0 3 -1) 0)
+(values-ref (min&max 0 3 -1) 1)
+(values-ref (min&max 0 3 -1) 2)
+
+(use srfi-1)
+(iota 100 1)
+(map (lambda (x)
+       (cond
+	((zero? (modulo x 15)) 'FizzBuzz)
+	((zero? (modulo x 5))  'Buzz)
+	((zero? (modulo x 3))  'Fizz)
+	(else x)))
+     (iota 100 1))
+       
+
 
